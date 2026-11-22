@@ -5,6 +5,7 @@ extends CharacterBody3D
 @export var run_speed: float = 4.8
 @export var fire_cooldown: float = 0.42
 @export var vision_range: float = 55.0
+@export var fog_vision_range: float = 9.0
 
 const CHARACTER_GLB := "res://assets/character/Soldier.glb"
 const CUSTOM_ENEMY_GLB := "res://assets/character/enemy_custom.glb"
@@ -36,6 +37,10 @@ var retarget_timer: float = 0.0
 var muzzle_timer: float = 0.0
 var evade_timer: float = 0.0
 var last_attacker: Node3D
+var wander_target: Vector3 = Vector3.ZERO
+var wander_timer: float = 0.0
+var wander_speed_mult: float = 1.0
+var has_wander_target: bool = false
 
 signal died(killer: Node3D)
 
@@ -174,14 +179,23 @@ func _physics_process(delta: float) -> void:
 	strafe_timer -= delta
 	retarget_timer -= delta
 	evade_timer = maxf(0.0, evade_timer - delta)
+	wander_timer -= delta
+
+	var fog_active := _is_fog_active()
+	var effective_vision := fog_vision_range if fog_active else vision_range
 
 	if strafe_timer <= 0.0:
 		strafe_dir = -strafe_dir
 		strafe_timer = randf_range(1.2, 2.6)
 
+	if fog_active and _is_valid_target(current_target):
+		var target_dist := Vector2(current_target.global_position.x - global_position.x, current_target.global_position.z - global_position.z).length()
+		if target_dist > effective_vision or not _has_line_of_sight(current_target):
+			current_target = null
+
 	if retarget_timer <= 0.0 or not _is_valid_target(current_target):
-		current_target = _pick_best_target()
-		retarget_timer = randf_range(0.6, 1.2)
+		current_target = _pick_best_target(fog_active, effective_vision)
+		retarget_timer = randf_range(0.4, 0.8) if fog_active else randf_range(0.6, 1.2)
 
 	var move_dir := Vector3.ZERO
 	var desired_speed := walk_speed
@@ -212,17 +226,22 @@ func _physics_process(delta: float) -> void:
 		if weapon_root != null:
 			weapon_root.look_at(current_target.global_position + Vector3(0.0, 0.5, 0.0), Vector3.UP)
 
-		if has_los and dist <= vision_range and fire_timer <= 0.0:
+		if has_los and dist <= effective_vision and fire_timer <= 0.0:
 			_shoot_at(current_target)
 	else:
-		# Sem alvo visível: avança patrulhando em direção ao centro da rua (z = 0)
-		var patrol_target := Vector3(randf_range(-4.0, 4.0), global_position.y, 0.0)
-		var to_patrol := Vector3(patrol_target.x - global_position.x, 0.0, patrol_target.z - global_position.z)
-		if to_patrol.length() > 3.0:
+		# Sem alvo visível: no nevoeiro anda com maior aleatoriedade pelo mapa; fora dele patrulha a rua
+		var dist_to_wander := Vector2(wander_target.x - global_position.x, wander_target.z - global_position.z).length()
+		if not has_wander_target or wander_timer <= 0.0 or dist_to_wander < 2.2:
+			_pick_next_wander_target(fog_active)
+
+		var to_patrol := Vector3(wander_target.x - global_position.x, 0.0, wander_target.z - global_position.z)
+		if to_patrol.length() > 1.2:
 			move_dir = _steer_around_obstacles(to_patrol.normalized())
 			var yaw := atan2(-move_dir.x, -move_dir.z)
-			rotation.y = lerp_angle(rotation.y, yaw, clampf(delta * 5.0, 0.0, 1.0))
-			desired_speed = walk_speed
+			rotation.y = lerp_angle(rotation.y, yaw, clampf(delta * (6.5 if fog_active else 5.0), 0.0, 1.0))
+			desired_speed = walk_speed * wander_speed_mult
+		else:
+			desired_speed = 0.0
 
 	velocity.x = move_toward(velocity.x, move_dir.x * desired_speed, 10.0 * delta)
 	velocity.z = move_toward(velocity.z, move_dir.z * desired_speed, 10.0 * delta)
@@ -261,12 +280,33 @@ func _steer_around_obstacles(desired_dir: Vector3) -> Vector3:
 		return (-side).normalized()
 	return desired_dir
 
-func _pick_best_target() -> Node3D:
+func _is_fog_active() -> bool:
+	var fog_mgr := get_tree().get_first_node_in_group("fog_manager")
+	return fog_mgr != null and bool(fog_mgr.get("is_fog_active"))
+
+func _pick_next_wander_target(fog_active: bool) -> void:
+	has_wander_target = true
+	if fog_active:
+		# No nevoeiro: anda aleatoriamente por todo o bairro e muda de direção com frequência
+		wander_target = Vector3(randf_range(-11.5, 11.5), global_position.y, randf_range(-50.0, 50.0))
+		wander_timer = randf_range(1.4, 3.2)
+		wander_speed_mult = randf_range(0.85, 1.35)
+		strafe_dir = 1.0 if randf() > 0.5 else -1.0
+	else:
+		wander_target = Vector3(randf_range(-8.0, 8.0), global_position.y, randf_range(-32.0, 32.0))
+		wander_timer = randf_range(3.5, 6.0)
+		wander_speed_mult = 1.0
+
+func _pick_best_target(fog_active: bool = false, effective_vision: float = vision_range) -> Node3D:
 	# Alvo exclusivo: apenas o jogador (não ataca outros adversários)
 	var player := get_tree().current_scene.get_node_or_null("Player") as Node3D
-	if _is_valid_target(player):
-		return player
-	return null
+	if not _is_valid_target(player):
+		return null
+	if fog_active:
+		var dist := Vector2(player.global_position.x - global_position.x, player.global_position.z - global_position.z).length()
+		if dist > effective_vision or not _has_line_of_sight(player):
+			return null
+	return player
 
 func _is_valid_target(node: Node) -> bool:
 	if node == null or not is_instance_valid(node):
@@ -341,7 +381,8 @@ func take_damage(amount: float, attacker: Node3D = null) -> void:
 	hp -= amount
 	if attacker != null and attacker.name == "Player" and _is_valid_target(attacker):
 		last_attacker = attacker
-		current_target = attacker
+		if not _is_fog_active() or Vector2(attacker.global_position.x - global_position.x, attacker.global_position.z - global_position.z).length() <= fog_vision_range:
+			current_target = attacker
 
 	if hp <= 0.0:
 		is_dead = true

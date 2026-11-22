@@ -3,6 +3,7 @@ extends CanvasLayer
 @export var player_path: NodePath = NodePath("../Player")
 @export var spawner_path: NodePath = NodePath("../EnemySpawner")
 @export var audio_manager_path: NodePath = NodePath("../AudioManager")
+@export var fog_manager_path: NodePath = NodePath("../FogManager")
 
 func _ready() -> void:
 	layer = 20
@@ -90,6 +91,10 @@ func _start_match(player_choice: String, enemy_choice: String) -> void:
 	var audio_mgr := get_node_or_null(audio_manager_path)
 	if audio_mgr != null and audio_mgr.has_method("start_match_audio"):
 		audio_mgr.call("start_match_audio", player_choice)
+
+	var fog_mgr := get_node_or_null(fog_manager_path)
+	if fog_mgr != null and fog_mgr.has_method("start_fog_cycle"):
+		fog_mgr.call("start_fog_cycle")
 
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	queue_free()

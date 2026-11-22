@@ -48,6 +48,8 @@ var is_aiming: bool = false
 var gun_audio: AudioStreamPlayer
 var bullet_holes: Array[Node3D] = []
 var status_label: Label
+var _last_hud_fog_sec: int = -1
+var _last_hud_fog_active: bool = false
 
 func _ready() -> void:
 	hp = max_hp
@@ -198,8 +200,34 @@ func _setup_hud() -> void:
 	_refresh_hud()
 
 func _refresh_hud() -> void:
-	if status_label != null:
-		status_label.text = "Vida: %d   |   Abates: %d" % [int(maxf(0.0, hp)), kills]
+	if status_label == null:
+		return
+	var base_text := "Vida: %d   |   Abates: %d" % [int(maxf(0.0, hp)), kills]
+	var fog_mgr := get_tree().get_first_node_in_group("fog_manager")
+	if fog_mgr != null and match_started:
+		var fog_active := bool(fog_mgr.get("is_fog_active"))
+		var rem := int(ceilf(float(fog_mgr.call("get_time_remaining"))))
+		if fog_active:
+			status_label.text = "%s   |   NEVOEIRO: %ds" % [base_text, rem]
+			status_label.add_theme_color_override("font_color", Color(1.0, 0.68, 0.38))
+		else:
+			status_label.text = "%s   |   Nevoeiro em: %ds" % [base_text, rem]
+			status_label.add_theme_color_override("font_color", Color(1.0, 0.95, 0.85))
+	else:
+		status_label.text = base_text
+
+func _process(_delta: float) -> void:
+	if not match_started or status_label == null:
+		return
+	var fog_mgr := get_tree().get_first_node_in_group("fog_manager")
+	if fog_mgr == null:
+		return
+	var fog_active := bool(fog_mgr.get("is_fog_active"))
+	var rem := int(ceilf(float(fog_mgr.call("get_time_remaining"))))
+	if rem != _last_hud_fog_sec or fog_active != _last_hud_fog_active:
+		_last_hud_fog_sec = rem
+		_last_hud_fog_active = fog_active
+		_refresh_hud()
 
 func register_kill() -> void:
 	kills += 1
