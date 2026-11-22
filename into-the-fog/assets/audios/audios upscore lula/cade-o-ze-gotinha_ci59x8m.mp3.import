@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://dlyxf647kvk1s"
+path="res://.godot/imported/cade-o-ze-gotinha_ci59x8m.mp3-195a2febb9871c3acc779040d6662b94.mp3str"
+
+[deps]
+
+source_file="res://assets/audios/audios upscore lula/cade-o-ze-gotinha_ci59x8m.mp3"
+dest_files=["res://.godot/imported/cade-o-ze-gotinha_ci59x8m.mp3-195a2febb9871c3acc779040d6662b94.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

@@ -2,6 +2,9 @@
 
 [ext_resource type="Script" path="res://scripts/neighborhood_builder.gd" id="1_village"]
 [ext_resource type="Script" path="res://scripts/player.gd" id="2_player"]
+[ext_resource type="Script" path="res://scripts/enemy_spawner.gd" id="3_spawner"]
+[ext_resource type="Script" path="res://scripts/character_select_ui.gd" id="4_select"]
+[ext_resource type="Script" path="res://scripts/audio_manager.gd" id="5_audio"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sunset"]
 sky_top_color = Color(0.28, 0.27, 0.42, 1)
@@ -45,6 +48,15 @@ shadow_enabled = true
 
 [node name="VillageMap" type="Node3D" parent="."]
 script = ExtResource("1_village")
+
+[node name="EnemySpawner" type="Node3D" parent="."]
+script = ExtResource("3_spawner")
+
+[node name="CharacterSelectUI" type="CanvasLayer" parent="."]
+script = ExtResource("4_select")
+
+[node name="AudioManager" type="Node" parent="."]
+script = ExtResource("5_audio")
 
 [node name="Player" type="CharacterBody3D" parent="."]
 transform = Transform3D(-0.766044, 0, -0.642788, 0, 1, 0, 0.642788, 0, -0.766044, -10.5, 1.3, -24.0)

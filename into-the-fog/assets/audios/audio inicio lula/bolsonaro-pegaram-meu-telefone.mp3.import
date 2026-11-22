@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://dtg5iarpyk8wn"
+path="res://.godot/imported/bolsonaro-pegaram-meu-telefone.mp3-ef2be873c986a7c5cec2b486349843d3.mp3str"
+
+[deps]
+
+source_file="res://assets/audios/audio inicio lula/bolsonaro-pegaram-meu-telefone.mp3"
+dest_files=["res://.godot/imported/bolsonaro-pegaram-meu-telefone.mp3-ef2be873c986a7c5cec2b486349843d3.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

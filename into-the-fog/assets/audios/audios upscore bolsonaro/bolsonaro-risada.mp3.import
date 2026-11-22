@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://jw76eyctqd10"
+path="res://.godot/imported/bolsonaro-risada.mp3-7d312ba52dd10638ccb2f58ed08dc429.mp3str"
+
+[deps]
+
+source_file="res://assets/audios/audios upscore bolsonaro/bolsonaro-risada.mp3"
+dest_files=["res://.godot/imported/bolsonaro-risada.mp3-7d312ba52dd10638ccb2f58ed08dc429.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

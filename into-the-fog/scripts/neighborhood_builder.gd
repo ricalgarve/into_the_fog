@@ -76,19 +76,23 @@ func build_map() -> void:
 	_place(root, "SM_Supermarket_Car_A", Vector3(4.3, 0.10, 18.0), 180.0, true)
 	_place(root, "SM_Supermarket_Car_B", Vector3(-4.3, 0.10, 32.0), 0.0, true)
 
-	# 5. Árvores nos jardins e bosque ao redor do bairro
+	# 5. Árvores nos jardins e bosque ao redor do bairro (com colisão no tronco)
 	var trees := ["SM_Supermarket_Tree_A", "SM_Supermarket_Tree_B", "SM_Supermarket_Tree_C", "SM_Supermarket_Tree_D"]
 	var idx := 0
 	for z in range(-54, 58, 12):
-		_place(root, trees[idx % trees.size()], Vector3(-28.0 - float((idx % 3) * 3), 0.0, float(z)), float(idx * 47), false)
+		var t1 := _place(root, trees[idx % trees.size()], Vector3(-28.0 - float((idx % 3) * 3), 0.0, float(z)), float(idx * 47), false)
+		_add_tree_trunk_collision(t1)
 		idx += 1
-		_place(root, trees[idx % trees.size()], Vector3(28.0 + float((idx % 3) * 3), 0.0, float(z + 5)), float(idx * 63), false)
+		var t2 := _place(root, trees[idx % trees.size()], Vector3(28.0 + float((idx % 3) * 3), 0.0, float(z + 5)), float(idx * 63), false)
+		_add_tree_trunk_collision(t2)
 		idx += 1
 
 	for z in [-48.0, -29.0, -11.0, 7.0, 26.0, 46.0]:
-		_place(root, trees[idx % trees.size()], Vector3(-14.5, 0.05, z), float(idx * 35), false)
+		var t3 := _place(root, trees[idx % trees.size()], Vector3(-14.5, 0.05, z), float(idx * 35), false)
+		_add_tree_trunk_collision(t3)
 		idx += 1
-		_place(root, trees[idx % trees.size()], Vector3(14.5, 0.05, z + 3.0), float(idx * 55), false)
+		var t4 := _place(root, trees[idx % trees.size()], Vector3(14.5, 0.05, z + 3.0), float(idx * 55), false)
+		_add_tree_trunk_collision(t4)
 		idx += 1
 
 	# 6. Bancos, cercas vivas e detalhes de calçada
@@ -247,6 +251,19 @@ func _place_lamp(parent: Node3D, pos: Vector3, yaw_deg: float) -> void:
 	light.light_energy = 5.2
 	light.omni_range = 18.0
 	lamp.add_child(light)
+
+func _add_tree_trunk_collision(tree_node: Node3D) -> void:
+	if tree_node == null:
+		return
+	var body := StaticBody3D.new()
+	var col := CollisionShape3D.new()
+	var cyl := CylinderShape3D.new()
+	cyl.radius = 0.4
+	cyl.height = 4.0
+	col.shape = cyl
+	col.position = Vector3(0.0, 2.0, 0.0)
+	body.add_child(col)
+	tree_node.add_child(body)
 
 func _collect_meshes(node: Node) -> void:
 	if node is MeshInstance3D:
